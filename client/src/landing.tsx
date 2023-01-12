@@ -10,7 +10,33 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 const theme = createTheme();
 
 export function Landing() {
+  let ws: WebSocket | null;
+
+  function showMessage(t: string) {
+    alert(t);
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();  
+      if (ws) {
+        ws.onerror = ws.onopen = ws.onclose = null;
+        ws.close();
+      }
+      const data = new FormData(event.currentTarget);
+      const encodedUsername= encodeURIComponent(data.get('username') as string);
+      ws = new WebSocket(`ws://${window.location.hostname}:8080/websocket/wsserver?username=${encodedUsername}`);
+      ws.onerror = function () {
+        showMessage('WebSocket error');
+      };
+      ws.onopen = function () {
+        showMessage('WebSocket connection established');
+      };
+      ws.onclose = function () {
+        showMessage('WebSocket connection closed');
+        ws = null;
+      };     
+    
+
   /*  event.preventDefault();
     const data = new FormData(event.currentTarget);
     console.log({
