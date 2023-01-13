@@ -1,8 +1,7 @@
 import { createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
 import querystring from 'node:querystring';
-import { ENABLE_LOG } from './config.js';
-const HTTP_PORT = 8080;
+import { ENABLE_LOG, HTTP_PORT } from './config.js';
 
 //https://github.com/websockets/ws
 
@@ -46,8 +45,6 @@ wss.on('connection', function connection(ws, request, client) {
   });
 });
 
-
-
 function authenticate(username, cb){
   if(!username) {
     return cb('Username missing');
@@ -62,6 +59,9 @@ function authenticate(username, cb){
 
 server.on('upgrade', function upgrade(request, socket, head) {
   
+  /* If password protection is needed this would need to be rewritten 
+  with a separate POST request which creates a session. This 
+  request to get socket would be made afterwards */ 
   const params = querystring.parse(request.url.substr(request.url.indexOf('?') + 1));
   const username = params.username;
 
