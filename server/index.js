@@ -48,9 +48,12 @@ wss.on("connection", function connection(ws, request, client) {
  */
 const keepAliveInterval = setInterval(function ping() {
   wss.clients.forEach(function each(ws) {
-    if (ws.isAlive === false) return ws.terminate();
-    cleanUpClient(ws, false);
-    broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
+    if (ws.isAlive === false) {
+      const session = socketSessions.get(ws);
+      cleanUpClient(ws, false);
+      broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
+      return ws.terminate();
+    }
     ws.isAlive = false;
     ws.ping();
   });
