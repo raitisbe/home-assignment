@@ -43,15 +43,19 @@ wss.on("connection", function connection(ws, request, client) {
 });
 
 /**
- * This is different than inactivity and can happen due to power failure etc., 
+ * This is different than inactivity and can happen due to power failure etc.,
  * but lets treat it the same as inactivity, just check less often.
  */
 const keepAliveInterval = setInterval(function ping() {
   wss.clients.forEach(function each(ws) {
     if (ws.isAlive === false) {
       const session = socketSessions.get(ws);
-      cleanUpClient(ws, false);
-      broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
+      if (session) {
+        cleanUpClient(ws, false);
+        broadcastSysMsg(
+          `${session.username} was disconnected due to inactivity`
+        );
+      }
       return ws.terminate();
     }
     ws.isAlive = false;
@@ -61,20 +65,22 @@ const keepAliveInterval = setInterval(function ping() {
 
 const inactivityInterval = setInterval(function ping() {
   wss.clients.forEach(function each(ws) {
-   const session = socketSessions.get(ws);
-   const now = new Date();
-   if(session) {
-    const inactiveFor = (now - session.lastActive) / 1000;
-    if(inactiveFor > INACTIVITY_PERIOD) {
-      broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
-      cleanUpClient(ws, false);
-      ws.close();
+    const session = socketSessions.get(ws);
+    const now = new Date();
+    if (session) {
+      const inactiveFor = (now - session.lastActive) / 1000;
+      if (inactiveFor > INACTIVITY_PERIOD) {
+        broadcastSysMsg(
+          `${session.username} was disconnected due to inactivity`
+        );
+        cleanUpClient(ws, false);
+        ws.close();
+      }
     }
-   }
   });
 }, 1000);
 
-wss.on('close', function close() {
+wss.on("close", function close() {
   clearInterval(keepAliveInterval);
   clearInterval(inactivityInterval);
 });
@@ -86,7 +92,7 @@ function cleanUpClient(ws, notify) {
     activeClients.delete(username);
     log(`Free up ${username} username`);
     socketSessions.delete(ws);
-    if(notify) {
+    if (notify) {
       broadcastSysMsg(`${username} left the chat, connection lost`);
     }
   }
@@ -136,7 +142,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
     wss.handleUpgrade(request, socket, head, function done(ws) {
       activeClients.set(username, { username, client: ws });
-      socketSessions.set(ws, {lastActive: new Date(), username});
+      socketSessions.set(ws, { lastActive: new Date(), username });
       wss.emit("connection", ws, request, ws);
     });
   });
