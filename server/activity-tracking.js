@@ -1,4 +1,5 @@
 import { INACTIVITY_PERIOD, INACTIVITY_POLL_PERIOD } from "./config.js";
+import { log } from "./logging.js";
 import { broadcastSysMsg } from "./messaging.js";
 import { cleanUpClient, socketSessions } from "./socket-sessions.js";
 
@@ -18,6 +19,7 @@ export function trackActivity(wss) {
         const session = socketSessions.get(ws);
         if (session) {
           cleanUpClient(wss, ws, false);
+          log('Socket is not alive anymore');
           broadcastSysMsg(
             wss,
             `${session.username} was disconnected due to inactivity`
@@ -40,6 +42,7 @@ export function trackActivity(wss) {
       if (session) {
         const inactiveFor = (now - session.lastActive) / 1000;
         if (inactiveFor > INACTIVITY_PERIOD) {
+          log(`Message not received for ${inactiveFor} seconds so closing.`);
           broadcastSysMsg(
             wss,
             `${session.username} was disconnected due to inactivity`

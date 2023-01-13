@@ -18,6 +18,10 @@ export const wss = new WebSocketServer({ noServer: true });
 
 wss.on("connection", function connection(ws, request, client) {
   log("Client connected");
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true //See activity-tracking
+  });
   ws.on("message", function message(data) {
     const session = socketSessions.get(client);
     const username = session.username;
