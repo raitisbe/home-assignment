@@ -6,43 +6,27 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { socketService } from './sockets';
+import { useNavigate } from "react-router-dom";
 
 const theme = createTheme();
 
 export function Landing() {
-  let ws: WebSocket | null;
+  const navigate = useNavigate();
 
-  function showMessage(t: string) {
-    alert(t);
-  }
+  socketService.onConnect.subscribe(() => {
+    navigate("/chat");
+  })
+
+  socketService.onClose.subscribe(() => {
+    
+  })
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();  
-      if (ws) {
-        ws.onerror = ws.onopen = ws.onclose = null;
-        ws.close();
-      }
       const data = new FormData(event.currentTarget);
-      const encodedUsername= encodeURIComponent(data.get('username') as string);
-      ws = new WebSocket(`ws://${window.location.hostname}:8080/websocket/wsserver?username=${encodedUsername}`);
-      ws.onerror = function () {
-        showMessage('WebSocket error');
-      };
-      ws.onopen = function () {
-        showMessage('WebSocket connection established');
-      };
-      ws.onclose = function () {
-        showMessage('WebSocket connection closed');
-        ws = null;
-      };     
-    
-
-  /*  event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('username')
-    });
-    */
+      const encodedUsername = encodeURIComponent(data.get("username") as string);
+      socketService.connect(encodedUsername);
   };
 
   return (
