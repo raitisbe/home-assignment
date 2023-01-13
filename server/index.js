@@ -1,11 +1,15 @@
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import querystring from "node:querystring";
-import { HTTP_PORT } from "./config.js";
+import { HTTP_PORT, LOG_MESSAGES } from "./config.js";
 import { distributeMessage } from "./messaging.js";
 import { trackActivity } from "./activity-tracking.js";
 import { log } from "./logging.js";
-import { activeClients, cleanUpClient, socketSessions } from "./socket-sessions.js";
+import {
+  activeClients,
+  cleanUpClient,
+  socketSessions,
+} from "./socket-sessions.js";
 
 //https://github.com/websockets/ws
 
@@ -20,7 +24,9 @@ wss.on("connection", function connection(ws, request, client) {
     const dec = new TextDecoder("utf-8");
     //TODO validate
     const wrapper = { sender: username, text: dec.decode(data) };
-    log(`Received message ${data} from user ${username}`);
+    if (LOG_MESSAGES) {
+      log(`Received message ${data} from user ${username}`);
+    }
     session.lastActive = new Date();
     distributeMessage(wss, wrapper);
   });
