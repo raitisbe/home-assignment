@@ -29,6 +29,9 @@ export class SocketService {
         if (data.sender && data.text) {
           this.onMessage.next(data);
         }
+        if (data.system) {
+          this.onMessage.next({sender: 'SYSTEM', text: data.system});
+        }
       } catch (ex) {
         console.log('Invalid message received or some other error occurred', ex);
       }
