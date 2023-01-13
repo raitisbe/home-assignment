@@ -1,6 +1,6 @@
 import { Grid, IconButton, TextField } from "@mui/material";
 import { Block } from "./block";
-import { BlockDataModel } from "./BlockDataModel";
+import { BlockModel } from "./block.model";
 import SendIcon from "@mui/icons-material/Send";
 import { socketService } from "./sockets";
 import { Component } from "react";
@@ -11,7 +11,7 @@ interface Props {
 }
 
 interface StateModel {
-  blocks: BlockDataModel[];
+  blocks: BlockModel[];
 }
 
 export class Chat extends Component<Props, StateModel> {

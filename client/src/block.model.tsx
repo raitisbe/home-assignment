@@ -1,5 +1,5 @@
 
-export type BlockDataModel = {
+export type BlockModel = {
   sender: string;
   messages: {
     id: string;

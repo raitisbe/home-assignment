@@ -1,7 +1,7 @@
 import { Avatar, Chip, Grid, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
-import { BlockDataModel } from './BlockDataModel';
+import { BlockModel } from './block.model';
 
 const Message = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#d9e3f7',
@@ -17,7 +17,7 @@ const Message = styled(Paper)(({ theme }) => ({
  * @param props 
  * @returns 
  */
-export function Block(props: { data: BlockDataModel; }) {
+export function Block(props: { data: BlockModel; }) {
   /**
    * Get the first letter of sender to display in the chip
    * @param sender 
