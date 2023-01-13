@@ -95,7 +95,7 @@ export class Chat extends Component<Props, StateModel> {
         <Grid container justifyContent={"center"} spacing={2}>
           <Grid item xs={12} md={8}>
             {this.state.blocks.map((block, i) => {
-              return <Block key={i} data={block}></Block>;
+              return <Block key={i} data={block} index={i}></Block>;
             })}
           </Grid>
           <Grid item xs={12} md={8}>

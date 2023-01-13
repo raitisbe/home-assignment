@@ -17,7 +17,9 @@ const Message = styled(Paper)(({ theme }) => ({
  * @param props 
  * @returns 
  */
-export function Block(props: { data: BlockModel; }) {
+export function Block(props: {
+  index: number; data: BlockModel; 
+}) {
   /**
    * Get the first letter of sender to display in the chip
    * @param sender 
@@ -30,7 +32,7 @@ export function Block(props: { data: BlockModel; }) {
   }
 
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={1} direction={props.index % 2 === 0 ? 'row' : 'row-reverse' }>
       <Grid item xs={2} md={2}>
         <Chip
           avatar={<Avatar>{firstLetter(props.data.sender)}</Avatar>}
