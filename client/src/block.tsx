@@ -1,14 +1,7 @@
 import { Avatar, Chip, Grid, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
-
-type BlockDataModel = {
-  sender: string;
-  messages: {
-    id: string;
-    text: string;
-  }[];
-};
+import { BlockDataModel } from './BlockDataModel';
 
 const Message = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#d9e3f7',
