@@ -5,7 +5,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { socketService } from "../sockets";
 import { Component } from "react";
 import { Subject, takeUntil } from "rxjs";
-import update from 'immutability-helper';
+import update from "immutability-helper";
 
 interface Props {
   navigate: any;
@@ -36,27 +36,44 @@ export class Chat extends Component<Props, StateModel> {
     });
 
     socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
-      const lastBlock = this.state.blocks.length > 0 ? this.state.blocks[this.state.blocks.length - 1] : undefined;
+      const lastBlock =
+        this.state.blocks.length > 0
+          ? this.state.blocks[this.state.blocks.length - 1]
+          : undefined;
       let append = false;
       if (lastBlock?.sender === e.sender) {
         append = true;
       }
-      if(append) {
+      if (append) {
         this.setState((previousState) => {
-          const previousStateLastBlock = previousState.blocks[previousState.blocks.length - 1];
-          const recreatedBlock = update(previousStateLastBlock, {messages: {$apply: function() {return update(previousStateLastBlock.messages, {$push: [{ id: Math.random().toString(), text: e.text }]})}}});
-          return  update(previousState, {blocks: {[previousState.blocks.length - 1]: {$set: recreatedBlock}}});
+          const prevStateLastBlock =
+            previousState.blocks[previousState.blocks.length - 1];
+          //Append message and recreate the whole last block
+          const recreatedBlock = update(prevStateLastBlock, {
+            messages: {
+              $apply: function () {
+                return update(prevStateLastBlock.messages, {
+                  $push: [{ text: e.text }],
+                });
+              },
+            },
+          });
+          //Duplicate blocks array with newly recreated last block
+          return update(previousState, {
+            blocks: {
+              [previousState.blocks.length - 1]: { $set: recreatedBlock },
+            },
+          });
         });
       } else {
-        const newItem = {
+        const newBlock = {
           sender: e.sender,
-          messages: [{ id: Math.random().toString(), text: e.text }],
+          messages: [{ text: e.text }],
         };
         this.setState((previousState) => ({
-          blocks: [...previousState.blocks, newItem],
+          blocks: [...previousState.blocks, newBlock],
         }));
       }
-      
     });
   }
 
