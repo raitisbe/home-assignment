@@ -1,24 +1,16 @@
 import { createServer } from "http";
-import { WebSocket, WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 import querystring from "node:querystring";
-import { ENABLE_LOG, HTTP_PORT, INACTIVITY_PERIOD } from "./config.js";
+import { HTTP_PORT } from "./config.js";
+import { distributeMessage } from "./messaging.js";
+import { trackActivity } from "./activity-tracking.js";
+import { log } from "./logging.js";
+import { activeClients, cleanUpClient, socketSessions } from "./socket-sessions.js";
 
 //https://github.com/websockets/ws
 
 const server = createServer();
-const wss = new WebSocketServer({ noServer: true });
-/** Store which sockets are mapped to which usernames */
-const activeClients = new Map();
-/** Store which usernames are mapped to which sockets */
-const socketSessions = new Map();
-
-function log() {
-  if (ENABLE_LOG) {
-    for (let i = 0; i < arguments.length; i++) {
-      console.log(new Array(i + 1).join("\t") + arguments[i]);
-    }
-  }
-}
+export const wss = new WebSocketServer({ noServer: true });
 
 wss.on("connection", function connection(ws, request, client) {
   log("Client connected");
@@ -26,90 +18,20 @@ wss.on("connection", function connection(ws, request, client) {
     const session = socketSessions.get(client);
     const username = session.username;
     const dec = new TextDecoder("utf-8");
+    //TODO validate
     const wrapper = { sender: username, text: dec.decode(data) };
     log(`Received message ${data} from user ${username}`);
     session.lastActive = new Date();
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(wrapper), { binary: false });
-      }
-    });
+    distributeMessage(wss, wrapper);
   });
 
   ws.on("close", function close(code, reason) {
     log("Client disconnected");
-    cleanUpClient(ws, true);
+    cleanUpClient(wss, ws, true);
   });
 });
 
-/**
- * This is different than inactivity and can happen due to power failure etc.,
- * but lets treat it the same as inactivity, just check less often.
- */
-const keepAliveInterval = setInterval(function ping() {
-  wss.clients.forEach(function each(ws) {
-    if (ws.isAlive === false) {
-      const session = socketSessions.get(ws);
-      if (session) {
-        cleanUpClient(ws, false);
-        broadcastSysMsg(
-          `${session.username} was disconnected due to inactivity`
-        );
-      }
-      return ws.terminate();
-    }
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, 30000);
-
-const inactivityInterval = setInterval(function ping() {
-  wss.clients.forEach(function each(ws) {
-    const session = socketSessions.get(ws);
-    const now = new Date();
-    if (session) {
-      const inactiveFor = (now - session.lastActive) / 1000;
-      if (inactiveFor > INACTIVITY_PERIOD) {
-        broadcastSysMsg(
-          `${session.username} was disconnected due to inactivity`
-        );
-        cleanUpClient(ws, false);
-        ws.close();
-      }
-    }
-  });
-}, 1000);
-
-wss.on("close", function close() {
-  clearInterval(keepAliveInterval);
-  clearInterval(inactivityInterval);
-});
-
-function cleanUpClient(ws, notify) {
-  const session = socketSessions.get(ws);
-  const username = session?.username;
-  if (username) {
-    activeClients.delete(username);
-    log(`Free up ${username} username`);
-    socketSessions.delete(ws);
-    if (notify) {
-      broadcastSysMsg(`${username} left the chat, connection lost`);
-    }
-  }
-}
-
-function broadcastSysMsg(message) {
-  wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          system: message,
-        }),
-        { binary: false }
-      );
-    }
-  });
-}
+trackActivity(wss);
 
 function authenticate(username, cb) {
   if (!username) {
