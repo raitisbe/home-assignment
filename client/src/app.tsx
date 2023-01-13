@@ -1,5 +1,4 @@
-import React, { ReactNode } from 'react';
-import { Routes, Route, Link, useNavigate, RouteProps, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate, Outlet } from "react-router-dom";
 import './app.css';
 import { Chat } from './chat';
 import { Landing } from './landing';
