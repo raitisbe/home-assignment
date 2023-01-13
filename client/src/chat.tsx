@@ -4,9 +4,10 @@ import { BlockDataModel } from "./BlockDataModel";
 import SendIcon from "@mui/icons-material/Send";
 import { socketService } from "./sockets";
 import { Component } from "react";
+import { Subject, takeUntil } from "rxjs";
 
 interface Props {
-  navigation: any;
+  navigate: any;
 }
 
 interface StateModel {
@@ -15,6 +16,7 @@ interface StateModel {
 
 export class Chat extends Component<Props, StateModel> {
   draft: string = "";
+  end = new Subject<void>();
 
   constructor(props: Props | Readonly<Props>) {
     super(props);
@@ -22,14 +24,17 @@ export class Chat extends Component<Props, StateModel> {
     this.state = {
       blocks: [],
     };
+
     this.send = this.send.bind(this);
     this.onDraftChange = this.onDraftChange.bind(this);
+  }
 
-    socketService.onClose.subscribe(() => {
-      this.props.navigation.navigate("/");
+  componentDidMount() {
+    socketService.onClose.pipe(takeUntil(this.end)).subscribe(() => {
+      this.props.navigate("/");
     });
 
-    socketService.onMessage.subscribe((e) => {
+    socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
       const newItem = {
         sender: e.sender,
         messages: [{ id: Math.random().toString(), text: e.text }],
@@ -38,6 +43,10 @@ export class Chat extends Component<Props, StateModel> {
         blocks: [...previousState.blocks, newItem],
       }));
     });
+  }
+
+  componentWillUnmount() {
+    this.end.next();
   }
 
   onDraftChange(event: { target: { value: string } }) {
