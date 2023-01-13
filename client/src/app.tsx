@@ -1,6 +1,6 @@
 import { Routes, Route, Link, useNavigate, Navigate, Outlet } from "react-router-dom";
 import './app.css';
-import { Chat } from './chat';
+import { Chat } from './chat/chat';
 import { Landing } from './landing';
 import { Layout } from './layout';
 import { socketService } from './sockets';

@@ -2,7 +2,7 @@ import { Grid, IconButton, TextField } from "@mui/material";
 import { Block } from "./block";
 import { BlockModel } from "./block.model";
 import SendIcon from "@mui/icons-material/Send";
-import { socketService } from "./sockets";
+import { socketService } from "../sockets";
 import { Component } from "react";
 import { Subject, takeUntil } from "rxjs";
 
