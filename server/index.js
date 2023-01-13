@@ -55,4 +55,4 @@ server.on('upgrade', function upgrade(request, socket, head) {
 });
 
 server.listen(HTTP_PORT);
-console.log(`HTTP Server listening on ${HTTP_PORT}. Connect to ws://localhost:8080/websocket/wsserver`)
+console.log(`HTTP Server listening on ${HTTP_PORT}. Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver`)

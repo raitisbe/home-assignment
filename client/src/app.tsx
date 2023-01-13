@@ -29,18 +29,18 @@ const ProtectedRoute = ({ children, ...props }: Props) => {
 };
 
 function App() {
-  const navigation = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="App">
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Landing navigate={navigation}/>} />
+          <Route index element={<Landing navigate={navigate}/>} />
           <Route
           path="chat"
           element={
             <ProtectedRoute>
-              <Chat navigate={navigation} />
+              <Chat navigate={navigate} />
             </ProtectedRoute>
           }
         />
