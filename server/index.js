@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import querystring from "node:querystring";
-import { ENABLE_LOG, HTTP_PORT } from "./config.js";
+import { ENABLE_LOG, HTTP_PORT, INACTIVITY_PERIOD } from "./config.js";
 
 //https://github.com/websockets/ws
 
@@ -10,7 +10,7 @@ const wss = new WebSocketServer({ noServer: true });
 /** Store which sockets are mapped to which usernames */
 const activeClients = new Map();
 /** Store which usernames are mapped to which sockets */
-const clientUsers = new Map();
+const socketSessions = new Map();
 
 function log() {
   if (ENABLE_LOG) {
@@ -23,10 +23,12 @@ function log() {
 wss.on("connection", function connection(ws, request, client) {
   log("Client connected");
   ws.on("message", function message(data) {
-    const user = clientUsers.get(client);
+    const session = socketSessions.get(client);
+    const username = session.username;
     const dec = new TextDecoder("utf-8");
-    const wrapper = { sender: user, text: dec.decode(data) };
-    log(`Received message ${data} from user ${user}`);
+    const wrapper = { sender: username, text: dec.decode(data) };
+    log(`Received message ${data} from user ${username}`);
+    session.lastActive = new Date();
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(wrapper), { binary: false });
@@ -36,24 +38,69 @@ wss.on("connection", function connection(ws, request, client) {
 
   ws.on("close", function close(code, reason) {
     log("Client disconnected");
-    const user = clientUsers.get(ws);
-    if (user) {
-      activeClients.delete(user);
-      log(`Free up ${user} username`);
-      clientUsers.delete(ws);
-      wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(
-            JSON.stringify({
-              system: `${user} left the chat, connection lost`,
-            }),
-            { binary: false }
-          );
-        }
-      });
-    }
+    cleanUpClient(ws, true);
   });
 });
+
+/**
+ * This is different than inactivity and can happen due to power failure etc., 
+ * but lets treat it the same as inactivity, just check less often.
+ */
+const keepAliveInterval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+    cleanUpClient(ws, false);
+    broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+const inactivityInterval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+   const session = socketSessions.get(ws);
+   const now = new Date();
+   if(session) {
+    const inactiveFor = (now - session.lastActive) / 1000;
+    if(inactiveFor > INACTIVITY_PERIOD) {
+      broadcastSysMsg(`${session.username} was disconnected due to inactivity`);
+      cleanUpClient(ws, false);
+      ws.close();
+    }
+   }
+  });
+}, 1000);
+
+wss.on('close', function close() {
+  clearInterval(keepAliveInterval);
+  clearInterval(inactivityInterval);
+});
+
+function cleanUpClient(ws, notify) {
+  const session = socketSessions.get(ws);
+  const username = session?.username;
+  if (username) {
+    activeClients.delete(username);
+    log(`Free up ${username} username`);
+    socketSessions.delete(ws);
+    if(notify) {
+      broadcastSysMsg(`${username} left the chat, connection lost`);
+    }
+  }
+}
+
+function broadcastSysMsg(message) {
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          system: message,
+        }),
+        { binary: false }
+      );
+    }
+  });
+}
 
 function authenticate(username, cb) {
   if (!username) {
@@ -86,7 +133,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
     wss.handleUpgrade(request, socket, head, function done(ws) {
       activeClients.set(username, { username, client: ws });
-      clientUsers.set(ws, username);
+      socketSessions.set(ws, {lastActive: new Date(), username});
       wss.emit("connection", ws, request, ws);
     });
   });
