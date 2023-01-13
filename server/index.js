@@ -8,10 +8,13 @@ const HTTP_PORT = 8080;
 
 const server = createServer();
 const wss = new WebSocketServer({ noServer: true });
+/** Store which sockets are mapped to which usernames */
 const activeClients = new Map();
+/** Store which usernames are mapped to which sockets */
 const clientUsers = new Map();
 
 wss.on('connection', function connection(ws, request, client) {
+  console.log('Client connected');
   ws.on('message', function message(data) {
     const user = clientUsers.get(client);
     const dec = new TextDecoder("utf-8");
@@ -23,33 +26,49 @@ wss.on('connection', function connection(ws, request, client) {
       }
     });
   });
+
+  ws.on('close', function close(code, reason) {
+    console.log('Client disconnected');
+    const user = clientUsers.get(ws);
+    if (user) {
+      activeClients.delete(user);
+      console.log(`Free up ${user} username`);
+      clientUsers.delete(ws);
+    }
+  });
 });
 
-function authenticate(request, cb){
-  const params = querystring.parse(request.url.substr(request.url.indexOf('?') + 1));
-  const username = params.username;
+
+
+function authenticate(username, cb){
   if(!username) {
     return cb('Username missing');
   }
   if(activeClients.get(username)) {
     return cb('Username taken');
   }
-  activeClients.set(username, {username, client: request.client});
-  clientUsers.set(request.client, username);
-  cb(null, request.client)
+  
+  console.log(`${username} authenticated`);
+  cb(null) //null error
 }
 
 server.on('upgrade', function upgrade(request, socket, head) {
-  // This function is not defined on purpose. Implement it with your own logic.
-  authenticate(request, function next(err, client) {
-    if (err || !client) {
+  
+  const params = querystring.parse(request.url.substr(request.url.indexOf('?') + 1));
+  const username = params.username;
+
+  authenticate(username, function next(err) {
+    if (err) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      console.log(`Closing socket due to missing authentication: `, err);
       socket.destroy();
       return;
     }
 
     wss.handleUpgrade(request, socket, head, function done(ws) {
-      wss.emit('connection', ws, request, client);
+      activeClients.set(username, {username, client: ws});
+      clientUsers.set(ws, username);
+      wss.emit('connection', ws, request, ws);
     });
   });
 });
