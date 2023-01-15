@@ -62,16 +62,12 @@ export class Landing extends React.Component<Props, StateModel> {
     if (response.success === true) {
       socketService.connect(response.sessionId);
     } else {
-      this.setState((previousState) => 
-        ({errorOpen: true, message: response.message})
-      )
+      this.setState({errorOpen: true, message: response.message})
     }
   }
 
   closeError(){
-    this.setState((previousState) => 
-        ({errorOpen: false})
-      )
+    this.setState({errorOpen: false})
   }
 
   render() {

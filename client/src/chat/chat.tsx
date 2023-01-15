@@ -84,12 +84,12 @@ export class Chat extends Component<Props, StateModel> {
   }
 
   onDraftChange(event: { target: { value: string } }) {
-    this.setState((previousState) => ({draft: event.target.value}));
+    this.setState({draft: event.target.value});
   }
 
   send() {
     socketService.send(this.state.draft);
-    this.setState((previousState) => ({draft: ''}));
+    this.setState({draft: ''});
   }
 
   render() {
