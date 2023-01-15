@@ -37,6 +37,7 @@ export class Chat extends Component<Props, StateModel> {
       this.props.navigate("/");
     });
 
+    //TODO split this into pieces
     socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
       const lastBlock =
         this.state.blocks.length > 0
