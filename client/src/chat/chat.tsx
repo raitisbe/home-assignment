@@ -13,10 +13,11 @@ interface Props {
 
 interface StateModel {
   blocks: BlockModel[];
+  draft: string;
 }
 
 export class Chat extends Component<Props, StateModel> {
-  draft: string = "";
+  
   end = new Subject<void>();
 
   constructor(props: Props | Readonly<Props>) {
@@ -24,6 +25,7 @@ export class Chat extends Component<Props, StateModel> {
 
     this.state = {
       blocks: [],
+      draft: ''
     };
 
     this.send = this.send.bind(this);
@@ -82,11 +84,12 @@ export class Chat extends Component<Props, StateModel> {
   }
 
   onDraftChange(event: { target: { value: string } }) {
-    this.draft = event.target.value;
+    this.setState((previousState) => ({draft: event.target.value}));
   }
 
   send() {
-    socketService.send(this.draft);
+    socketService.send(this.state.draft);
+    this.setState((previousState) => ({draft: ''}));
   }
 
   render() {
@@ -102,8 +105,14 @@ export class Chat extends Component<Props, StateModel> {
             <TextField
               label="Message:"
               variant="outlined"
+              value={this.state.draft}
               onChange={this.onDraftChange}
               fullWidth
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  this.send()
+                }
+              }}
               InputProps={{
                 endAdornment: (
                   <IconButton onClick={this.send}>
