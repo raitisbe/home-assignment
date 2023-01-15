@@ -1,11 +1,11 @@
 import { WebSocket } from "ws";
+import { globals } from "./global.js";
 
 /**
- * @param {WebSocketServer} wss
  * @param {string} message
  */
-export function broadcastSysMsg(wss, message) {
-  wss.clients.forEach(function each(client) {
+export function broadcastSysMsg(message) {
+  globals.wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(
         JSON.stringify({
@@ -19,11 +19,10 @@ export function broadcastSysMsg(wss, message) {
 
 /**
  * Use this for ordinary chat messages
- * @param {WebSocketServer} wss
  * @param {{sender: string, text: string}} wrapper
  */
-export function distributeMessage(wss, wrapper) {
-  wss.clients.forEach(function each(client) {
+export function distributeMessage(wrapper) {
+  globals.wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(wrapper), { binary: false });
     }

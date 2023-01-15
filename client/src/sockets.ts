@@ -8,16 +8,14 @@ export class SocketService {
   onClose = new Subject<void>();
   onMessage = new Subject<{sender: string, text: string}>();
 
-  constructor() {}
-
-  connect(username: string) {
+  connect(sessionId: string) {
     if (this.ws) {
       this.ws.onerror = this.ws.onopen = this.ws.onclose = null;
       this.ws.close();
     }
 
     this.ws = new WebSocket(
-      `ws://${window.location.hostname}:8080/websocket/wsserver?username=${username}`
+      `ws://${window.location.hostname}:8080/websocket/wsserver?sessionId=${sessionId}`
     );
     this.ws.onerror = (e) => {
       this.onError.next();

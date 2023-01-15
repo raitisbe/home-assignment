@@ -32,11 +32,23 @@ export class Landing extends React.Component<Props, StateModel> {
     this.end.next();
   }
 
-  handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const encodedUsername = encodeURIComponent(data.get("username") as string);
-    socketService.connect(encodedUsername);
+    const response = await fetch(
+      `http://${window.location.hostname}:8080/auth`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({username: encodedUsername}),
+      }
+    ).then((response) => response.json());
+    if (response.success === true) {
+      socketService.connect(response.sessionId);
+    }
   }
 
   render() {

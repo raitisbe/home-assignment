@@ -1,5 +1,6 @@
 import { broadcastSysMsg } from "./messaging.js";
 import { log } from "./logging.js";
+import { globals } from "./global.js";
 
 /** Store which sockets are mapped to which usernames */
 export const activeClients = new Map();
@@ -14,7 +15,7 @@ export const socketSessions = new Map();
  * @param {WebSocket} ws
  * @param {boolean} notify 
  */
-export function cleanUpClient(wss, ws, notify) {
+export function cleanUpClient(ws, notify) {
   const session = socketSessions.get(ws);
   const username = session?.username;
   if (username) {
@@ -22,7 +23,10 @@ export function cleanUpClient(wss, ws, notify) {
     log(`Free up ${username} username`);
     socketSessions.delete(ws);
     if (notify) {
-      broadcastSysMsg(wss, `${username} left the chat, connection lost`);
+      broadcastSysMsg(`${username} left the chat, connection lost`);
     }
+  }
+  if(session?.sessionId) {
+    globals.sessionStore.destroy(session.sessionId);
   }
 }

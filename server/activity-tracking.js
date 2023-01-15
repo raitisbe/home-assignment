@@ -4,11 +4,10 @@ import { broadcastSysMsg } from "./messaging.js";
 import { cleanUpClient, socketSessions } from "./socket-sessions.js";
 
 /**
- * 
- * @param {WebSocketServer} wss 
+ *
+ * @param {WebSocketServer} wss
  */
 export function trackActivity(wss) {
-
   /**
    * This is different than inactivity and can happen due to power failure etc.,
    * but lets treat it the same as inactivity, just check less often.
@@ -18,10 +17,9 @@ export function trackActivity(wss) {
       if (ws.isAlive === false) {
         const session = socketSessions.get(ws);
         if (session) {
-          cleanUpClient(wss, ws, false);
-          log('Socket is not alive anymore');
+          cleanUpClient(ws, false);
+          log("Socket is not alive anymore");
           broadcastSysMsg(
-            wss,
             `${session.username} was disconnected due to inactivity`
           );
         }
@@ -44,10 +42,9 @@ export function trackActivity(wss) {
         if (inactiveFor > INACTIVITY_PERIOD) {
           log(`Message not received for ${inactiveFor} seconds so closing.`);
           broadcastSysMsg(
-            wss,
             `${session.username} was disconnected due to inactivity`
           );
-          cleanUpClient(wss, ws, false);
+          cleanUpClient(ws, false);
           ws.close();
         }
       }
