@@ -6,10 +6,11 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { socketService } from "./sockets";
 import { Subject, takeUntil } from "rxjs";
 import CloseIcon from '@mui/icons-material/Close';
 import { IconButton, Snackbar } from "@mui/material";
+
+import { socketService } from "./sockets";
 
 const theme = createTheme();
 

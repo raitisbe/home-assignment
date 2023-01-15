@@ -1,6 +1,7 @@
 import { Avatar, Chip, Grid, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
+
 import { BlockModel } from './block.model';
 
 const Message = styled(Paper)(({ theme }) => ({
