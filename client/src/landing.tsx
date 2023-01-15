@@ -8,6 +8,8 @@ import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { socketService } from "./sockets";
 import { Subject, takeUntil } from "rxjs";
+import CloseIcon from '@mui/icons-material/Close';
+import { IconButton, Snackbar } from "@mui/material";
 
 const theme = createTheme();
 
@@ -15,10 +17,20 @@ interface Props {
   navigate: any;
 }
 
-interface StateModel {}
+interface StateModel {
+  errorOpen: boolean;
+  message: string
+}
 
 export class Landing extends React.Component<Props, StateModel> {
   end = new Subject<void>();
+
+  constructor(props: Props | Readonly<Props>) {
+    super(props);
+    this.state = {errorOpen: false, message: ''};
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.closeError = this.closeError.bind(this);
+  }
 
   componentDidMount() {
     socketService.onConnect.pipe(takeUntil(this.end)).subscribe(() => {
@@ -48,10 +60,33 @@ export class Landing extends React.Component<Props, StateModel> {
     ).then((response) => response.json());
     if (response.success === true) {
       socketService.connect(response.sessionId);
+    } else {
+      this.setState((previousState) => 
+        ({errorOpen: true, message: response.message})
+      )
     }
   }
 
+  closeError(){
+    this.setState((previousState) => 
+        ({errorOpen: false})
+      )
+  }
+
   render() {
+    const action = (
+      <React.Fragment>
+        <IconButton
+          size="small"
+          aria-label="close"
+          color="inherit"
+          onClick={this.closeError}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </React.Fragment>
+    );
+
     return (
       <ThemeProvider theme={theme}>
         <Container component="main" maxWidth="xs">
@@ -92,6 +127,13 @@ export class Landing extends React.Component<Props, StateModel> {
               </Button>
             </Box>
           </Box>
+          <Snackbar
+            anchorOrigin={{vertical: 'top', horizontal: 'center' }}
+            open={this.state.errorOpen}
+            onClose={this.closeError}
+            message={this.state.message}
+            action={action}
+          />
         </Container>
       </ThemeProvider>
     );
