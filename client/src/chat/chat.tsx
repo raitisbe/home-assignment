@@ -38,7 +38,6 @@ export class Chat extends Component<Props, StateModel> {
       this.props.navigate("/", { state: { errorOpen: true, message: 'You were disconnected' } });
     });
 
-    //TODO split this into pieces
     socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
       const lastBlock =
         this.state.blocks.length > 0
@@ -49,44 +48,52 @@ export class Chat extends Component<Props, StateModel> {
         append = true;
       }
       if (append) {
-        this.setState((previousState) => {
-          const prevStateLastBlock =
-            previousState.blocks[previousState.blocks.length - 1];
-          //Append message and recreate the whole last block
-          const recreatedBlock = update(prevStateLastBlock, {
-            messages: {
-              $apply: function () {
-                return update(prevStateLastBlock.messages, {
-                  $push: [{ text: e.text }],
-                });
-              },
-            },
-          });
-          //Duplicate blocks array with newly recreated last block
-          return update(previousState, {
-            blocks: {
-              [previousState.blocks.length - 1]: { $set: recreatedBlock },
-            },
-          });
-        });
+        this.appendMessageToBlock(e);
       } else {
-        const newBlock = {
-          sender: e.sender,
-          messages: [{ text: e.text }],
-        };
-        this.setState((previousState) => ({
-          blocks: [...previousState.blocks, newBlock],
-        }));
+        this.startNewBlock(e);
       }
+      
+    });
+  }
+
+  startNewBlock(msg: { sender: string; text: string; }) {
+    const newBlock = {
+      sender: msg.sender,
+      messages: [{ text: msg.text }],
+    };
+    this.setState((previousState) => ({
+      blocks: [...previousState.blocks, newBlock],
+    }), () => {
+      this.scrollToBottom();
+    });
+  }
+
+  appendMessageToBlock(e: { sender: string; text: string; }) {
+    this.setState((previousState) => {
+      const prevStateLastBlock = previousState.blocks[previousState.blocks.length - 1];
+      //Append message and recreate the whole last block
+      const recreatedBlock = update(prevStateLastBlock, {
+        messages: {
+          $apply: function () {
+            return update(prevStateLastBlock.messages, {
+              $push: [{ text: e.text }],
+            });
+          },
+        },
+      });
+      //Duplicate blocks array with newly recreated last block
+      return update(previousState, {
+        blocks: {
+          [previousState.blocks.length - 1]: { $set: recreatedBlock },
+        },
+      });
+    }, () => {
       this.scrollToBottom();
     });
   }
 
   scrollToBottom() {
-    //Timeout used to wait for the ui to redraw
-    setTimeout(() => {
-      this.messagesEnd?.scrollIntoView({ behavior: "smooth",  });
-    })
+    this.messagesEnd?.scrollIntoView({ behavior: "smooth",  });
   }
 
   componentWillUnmount() {
