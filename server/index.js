@@ -91,16 +91,20 @@ wss.on("connection", function connection(ws, request, client) {
     ws.isAlive = true; //See activity-tracking
   });
   ws.on("message", function message(data) {
-    const session = socketSessions.get(client);
-    const username = session.username;
-    const dec = new TextDecoder("utf-8");
-    //TODO validate
-    const wrapper = { sender: username, text: dec.decode(data) };
-    if (LOG_MESSAGES) {
-      log(`Received message ${data} from user ${username}`);
+    try {
+      const session = socketSessions.get(client);
+      const username = session.username;
+      if (!username) return;
+      const dec = new TextDecoder("utf-8");
+      const wrapper = { sender: username, text: dec.decode(data) };
+      if (LOG_MESSAGES) {
+        log(`Received message ${data} from user ${username}`);
+      }
+      session.lastActive = new Date();
+      distributeMessage(wrapper);
+    } catch (ex) {
+      log("Bad message was received and error occurred", ex);
     }
-    session.lastActive = new Date();
-    distributeMessage(wrapper);
   });
 
   ws.on("close", function close(code, reason) {
@@ -120,28 +124,32 @@ function authenticateWs(username, cb) {
 }
 
 server.on("upgrade", function upgrade(request, socket, head) {
-  const params = querystring.parse(
-    request.url.substr(request.url.indexOf("?") + 1)
-  );
-  const sessionId = params.sessionId;
-  sessionStore.get(sessionId, (error, session) => {
-    const username = session?.username;
-
-    authenticateWs(username, function next(err) {
-      if (err) {
-        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-        log(`Closing socket due to missing authentication: `, err);
-        socket.destroy();
-        return;
-      }
-
-      wss.handleUpgrade(request, socket, head, function done(ws) {
-        activeClients.set(username, { username, client: ws });
-        socketSessions.set(ws, { lastActive: new Date(), username, sessionId });
-        wss.emit("connection", ws, request, ws);
+  try {
+    const params = querystring.parse(
+      request.url.substr(request.url.indexOf("?") + 1)
+    );
+    const sessionId = params.sessionId;
+    sessionStore.get(sessionId, (error, session) => {
+      const username = session?.username;
+  
+      authenticateWs(username, function next(err) {
+        if (err) {
+          socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+          log(`Closing socket due to missing authentication: `, err);
+          socket.destroy();
+          return;
+        }
+  
+        wss.handleUpgrade(request, socket, head, function done(ws) {
+          activeClients.set(username, { username, client: ws });
+          socketSessions.set(ws, { lastActive: new Date(), username, sessionId });
+          wss.emit("connection", ws, request, ws);
+        });
       });
     });
-  });
+  } catch (ex) {
+    log('Some error occurred during upgrading connection');
+  }
 });
 
 server.listen(HTTP_PORT);
