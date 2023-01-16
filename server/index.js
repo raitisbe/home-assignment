@@ -69,7 +69,7 @@ function authenticate(req, res) {
   if (activeClients.get(username)) {
     return res.status(403).json({
       success: false,
-      message: "Username taken",
+      message: "Failed to connect. Nickname already taken.",
     });
   }
   req.session.username = username;

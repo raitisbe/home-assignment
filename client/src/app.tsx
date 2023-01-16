@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useNavigate, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
 
 import './app.css';
 import { Chat } from './chat/chat';
@@ -31,12 +31,12 @@ const ProtectedRoute = ({ children, ...props }: Props) => {
 
 function App() {
   const navigate = useNavigate();
-
+  const location = useLocation();
   return (
     <div className="App">
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Landing navigate={navigate}/>} />
+          <Route index element={<Landing navigate={navigate} location={location}/>} />
           <Route
           path="chat"
           element={

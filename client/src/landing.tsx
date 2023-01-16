@@ -16,6 +16,7 @@ const theme = createTheme();
 
 interface Props {
   navigate: any;
+  location: any;
 }
 
 interface StateModel {
@@ -28,7 +29,9 @@ export class Landing extends React.Component<Props, StateModel> {
 
   constructor(props: Props | Readonly<Props>) {
     super(props);
-    this.state = {errorOpen: false, message: ''};
+    const stateFromLocation = this.props.location.state;
+    this.state = stateFromLocation ?? {errorOpen: false, message: ''};
+
     this.handleSubmit = this.handleSubmit.bind(this);
     this.closeError = this.closeError.bind(this);
   }
@@ -49,21 +52,30 @@ export class Landing extends React.Component<Props, StateModel> {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const encodedUsername = encodeURIComponent(data.get("username") as string);
-    const response = await fetch(
-      `http://${window.location.hostname}:8080/auth`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({username: encodedUsername}),
+    try {
+      const response = await fetch(
+        `http://${window.location.hostname}:8080/auth`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({username: encodedUsername}),
+        }
+      ).then((response) => response.json());
+      if (response.success === true) {
+        socketService.connect(response.sessionId);
+      } else {
+        this.setState({errorOpen: true, message: response.message})
       }
-    ).then((response) => response.json());
-    if (response.success === true) {
-      socketService.connect(response.sessionId);
-    } else {
-      this.setState({errorOpen: true, message: response.message})
+    } catch (ex: any) {
+      if (ex.message === 'Failed to fetch') {
+        this.setState({errorOpen: true, message: 'Server unavailable'})
+      } else {
+        this.setState({errorOpen: true, message: `Server unavailable: ${ex.message}`})
+      }
     }
+    
   }
 
   closeError(){

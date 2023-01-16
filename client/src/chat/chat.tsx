@@ -34,7 +34,7 @@ export class Chat extends Component<Props, StateModel> {
 
   componentDidMount() {
     socketService.onClose.pipe(takeUntil(this.end)).subscribe(() => {
-      this.props.navigate("/");
+      this.props.navigate("/", { state: { errorOpen: true, message: 'You were disconnected' } });
     });
 
     //TODO split this into pieces
