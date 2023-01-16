@@ -8,7 +8,7 @@ import { MemoryStore } from "express-session";
 import cors from "cors";
 
 import { trackActivity } from "./activity-tracking.js";
-import { HTTP_PORT, LOG_MESSAGES, serverUrl, SESSION_SECRET } from "./config.js";
+import { HTTP_PORT, LOG_MESSAGES, siteUrl, SESSION_SECRET } from "./config.js";
 import { broadcastSysMsg, distributeMessage } from "./messaging.js";
 import { log } from "./logging.js";
 import {
@@ -30,7 +30,7 @@ app.use(
   cors({
     credentials: true,
     origin: function (origin, callback) {
-      if (serverUrl == origin) {
+      if (siteUrl == origin) {
         callback(null, true);
       } else if (
         !origin ||
