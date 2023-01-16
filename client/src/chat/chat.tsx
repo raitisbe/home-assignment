@@ -7,6 +7,7 @@ import update from "immutability-helper";
 import { Block } from "./block";
 import { BlockModel } from "./block.model";
 import { socketService } from "../sockets";
+
 interface Props {
   navigate: any;
 }
@@ -63,9 +64,7 @@ export class Chat extends Component<Props, StateModel> {
     };
     this.setState((previousState) => ({
       blocks: [...previousState.blocks, newBlock],
-    }), () => {
-      this.scrollToBottom();
-    });
+    }), () => this.scrollToBottom());
   }
 
   appendMessageToBlock(e: { sender: string; text: string; }) {
@@ -87,9 +86,7 @@ export class Chat extends Component<Props, StateModel> {
           [previousState.blocks.length - 1]: { $set: recreatedBlock },
         },
       });
-    }, () => {
-      this.scrollToBottom();
-    });
+    }, () => this.scrollToBottom());
   }
 
   scrollToBottom() {
