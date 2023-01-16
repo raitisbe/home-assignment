@@ -47,6 +47,10 @@ export class SocketService {
   send(draft: string) {
     this.ws?.send(draft);
   }
+
+  disconnect() {
+    this.ws?.close();
+  }
 }
 
 export const socketService = new SocketService();

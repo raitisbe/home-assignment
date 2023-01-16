@@ -14,6 +14,7 @@ export function Layout() {
       <Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
         <Link component={LinkRR} to="/" sx={{minWidth : 100 }}>Home</Link>
         {socketService.ws !== null && <Link component={LinkRR}  to="/chat" sx={{minWidth : 100 }}>Chat</Link>}
+        {socketService.ws !== null && <Link href="#" onClick={(e) => {socketService.disconnect(); e.preventDefault()}} sx={{flexGrow : 1, textAlign: 'right', marginRight: '1em' }}>Disconnect</Link>}
       </Box>
 
       <hr />
