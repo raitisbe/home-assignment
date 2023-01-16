@@ -6,6 +6,7 @@ import querystring from "node:querystring";
 import session from 'express-session';
 import {MemoryStore} from 'express-session';
 import cors from 'cors';
+import path from 'path';
 
 import { trackActivity } from "./activity-tracking.js";
 import { HTTP_PORT, LOG_MESSAGES, serverUrl } from "./config.js";
@@ -75,6 +76,10 @@ function authenticate(req, res){
   })
 }
 
+app.use(
+  express.static('public-client')
+);
+
 app.use(express.json());
 app.post(`/auth`, authenticate);
 
@@ -140,5 +145,12 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 server.listen(HTTP_PORT);
 log(
-  `HTTP Server listening on ${HTTP_PORT}. Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`
+  `HTTP Server listening on ${HTTP_PORT}. Open: `
 );
+log(
+  `http://localhost:${HTTP_PORT}`
+);
+log(
+  `Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`
+);
+
