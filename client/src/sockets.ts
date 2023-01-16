@@ -1,4 +1,5 @@
 import { Subject } from "rxjs";
+import { WEBSOCKET_SERVER_URL } from "./config";
 
 export class SocketService {
   ws: WebSocket | null = null;
@@ -15,7 +16,7 @@ export class SocketService {
     }
 
     this.ws = new WebSocket(
-      `ws://${window.location.hostname}:8080/websocket/wsserver?sessionId=${sessionId}`
+      (WEBSOCKET_SERVER_URL ?? `ws://${window.location.hostname}:8080/websocket/wsserver`) + `?sessionId=${sessionId}`
     );
     this.ws.onerror = (e) => {
       this.onError.next();
