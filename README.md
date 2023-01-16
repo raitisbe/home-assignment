@@ -1,8 +1,8 @@
 # Chat app
 
-For development have two terminals open:
+For development we can two parts (client and server) separately. Have two terminals open:
 
-```
+```console
 cd client
 npm ci
 npm run start
@@ -10,7 +10,7 @@ npm run start
 
 and
 
-```
+```console
 cd server
 npm ci
 npm run start
@@ -19,17 +19,23 @@ npm run start
 
 ## Available Scripts
 
-In the project directory, you can run:
+While in the repo root directory you can run:
 
-### `make build-and-run`
+### Build and run the whole package
 
-Compiles client side code, copies the distribution files to servers public directory and starts server.
+Even though client app is a SPA, it can be served from server application to do without nginx or other proxy configuration. 
+
+```console
+make build-and-run
+```
+
+It compiles the client side code, copies the distribution files to servers public directory and starts the server.
 
 Open and see the application at [http://localhost:8080](http://localhost:8080)
 
 ## Configuration
 
-Set .env variables which control server in server/.env file. Example:
+Env file is not mandatory, but you can set .env variables which control server in server/.env file. Example:
 
 ```
 ENABLE_LOG = true           #Default: true
