@@ -96,13 +96,13 @@ export class Chat extends Component<Props, StateModel> {
   render() {
     return (
       <div>
-        <Grid container justifyContent={"center"} spacing={2}>
-          <Grid item xs={12} md={8}>
+        <Grid container justifyContent={"center"} sx={{height: 'calc(100vh - 4em)'}} spacing={0}>
+          <Grid item xs={12} md={8} sx={{overflowY: 'scroll', flexGrow: 1, maxHeight: 'calc(100vh - 6em)'}}>
             {this.state.blocks.map((block, i) => {
               return <Block key={i} data={block} index={i}></Block>;
             })}
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} md={8} sx={{height: '2em'}}>
             <TextField
               label="Message:"
               variant="outlined"
