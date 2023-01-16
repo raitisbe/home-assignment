@@ -9,7 +9,7 @@ const Message = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
   padding: theme.spacing(1),
   margin: theme.spacing(0.5),
-  textAlign: 'center',
+  textAlign: 'left',
   color: theme.palette.text.secondary,
 }));
 
@@ -44,7 +44,7 @@ export function Block(props: {
         {props.data.messages.map((msg, i) => {
           return (
             <Grid item key={i}>
-              <Message>{msg.text}</Message>
+              <Message sx={{textAlign : (props.index % 2 === 0 ? 'left' : 'right')}}>{msg.text}</Message>
             </Grid>
           );
         })}
