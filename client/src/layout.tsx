@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Box from '@mui/material/Box';
 import { Link } from '@mui/material';
 import {Link as LinkRR} from 'react-router-dom';
+import { socketService } from './sockets';
 
 export function Layout() {
   return (
@@ -12,7 +13,7 @@ export function Layout() {
 
       <Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
         <Link component={LinkRR} to="/" sx={{minWidth : 100 }}>Home</Link>
-        <Link component={LinkRR} to="/chat" sx={{minWidth : 100 }}>Chat</Link>
+        {socketService.ws !== null && <Link component={LinkRR}  to="/chat" sx={{minWidth : 100 }}>Chat</Link>}
       </Box>
 
       <hr />
