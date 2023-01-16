@@ -1,15 +1,14 @@
 import { Server } from "http";
-import express from 'express';
+import express from "express";
 import bodyParser from "body-parser";
 import { WebSocketServer } from "ws";
 import querystring from "node:querystring";
-import session from 'express-session';
-import {MemoryStore} from 'express-session';
-import cors from 'cors';
-import path from 'path';
+import session from "express-session";
+import { MemoryStore } from "express-session";
+import cors from "cors";
 
 import { trackActivity } from "./activity-tracking.js";
-import { HTTP_PORT, LOG_MESSAGES, serverUrl } from "./config.js";
+import { HTTP_PORT, LOG_MESSAGES, serverUrl, SESSION_SECRET } from "./config.js";
 import { distributeMessage } from "./messaging.js";
 import { log } from "./logging.js";
 import {
@@ -23,7 +22,7 @@ import { globals } from "./global.js";
 
 const app = express();
 const server = Server(app);
-export const wss = new WebSocketServer({ noServer: true});
+export const wss = new WebSocketServer({ noServer: true });
 
 globals.wss = wss;
 
@@ -35,8 +34,7 @@ app.use(
         callback(null, true);
       } else if (
         !origin ||
-        (origin &&
-          origin.indexOf("http://localhost") > -1)
+        (origin && origin.indexOf("http://localhost") > -1)
       ) {
         callback(null, true);
       } else {
@@ -52,33 +50,36 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //Memory store is not for production - doesn't scale well and does not persist
 const sessionStore = new MemoryStore();
 globals.sessionStore = sessionStore;
-const sessionParser = session({secret: 'asd32edf23resf3wr', store: sessionStore});
+const sessionParser = session({
+  secret: SESSION_SECRET,
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+});
 app.use(sessionParser);
 
-function authenticate(req, res){
+function authenticate(req, res) {
   const username = req.body.username;
   if (!username) {
     return res.status(403).json({
       success: false,
-      message: 'Username missing',
-    })
+      message: "Username missing",
+    });
   }
   if (activeClients.get(username)) {
     return res.status(403).json({
       success: false,
-      message: 'Username taken',
-    })
+      message: "Username taken",
+    });
   }
   req.session.username = username;
   return res.status(200).json({
     success: true,
-    sessionId: req.session.id
-  })
+    sessionId: req.session.id,
+  });
 }
 
-app.use(
-  express.static('public-client')
-);
+app.use(express.static("public-client"));
 
 app.use(express.json());
 app.post(`/auth`, authenticate);
@@ -86,8 +87,8 @@ app.post(`/auth`, authenticate);
 wss.on("connection", function connection(ws, request, client) {
   log("Client connected");
   ws.isAlive = true;
-  ws.on('pong', () => {
-    ws.isAlive = true //See activity-tracking
+  ws.on("pong", () => {
+    ws.isAlive = true; //See activity-tracking
   });
   ws.on("message", function message(data) {
     const session = socketSessions.get(client);
@@ -133,7 +134,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
         socket.destroy();
         return;
       }
-  
+
       wss.handleUpgrade(request, socket, head, function done(ws) {
         activeClients.set(username, { username, client: ws });
         socketSessions.set(ws, { lastActive: new Date(), username, sessionId });
@@ -144,13 +145,6 @@ server.on("upgrade", function upgrade(request, socket, head) {
 });
 
 server.listen(HTTP_PORT);
-log(
-  `HTTP Server listening on ${HTTP_PORT}. Open: `
-);
-log(
-  `http://localhost:${HTTP_PORT}`
-);
-log(
-  `Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`
-);
-
+log(`HTTP Server listening on ${HTTP_PORT}. Open: `);
+log(`http://localhost:${HTTP_PORT}`);
+log(`Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`);
