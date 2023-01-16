@@ -1,4 +1,4 @@
 export class globals {
-    static wss; //WebsocketServer
-    static sessionStore;
+  static wss; //WebsocketServer
+  static sessionStore;
 }

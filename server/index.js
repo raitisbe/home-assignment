@@ -131,7 +131,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
     const sessionId = params.sessionId;
     sessionStore.get(sessionId, (error, session) => {
       const username = session?.username;
-  
+
       authenticateWs(username, function next(err) {
         if (err) {
           socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -139,16 +139,20 @@ server.on("upgrade", function upgrade(request, socket, head) {
           socket.destroy();
           return;
         }
-  
+
         wss.handleUpgrade(request, socket, head, function done(ws) {
           activeClients.set(username, { username, client: ws });
-          socketSessions.set(ws, { lastActive: new Date(), username, sessionId });
+          socketSessions.set(ws, {
+            lastActive: new Date(),
+            username,
+            sessionId,
+          });
           wss.emit("connection", ws, request, ws);
         });
       });
     });
   } catch (ex) {
-    log('Some error occurred during upgrading connection');
+    log("Some error occurred during upgrading connection");
   }
 });
 
@@ -157,9 +161,10 @@ log(`HTTP Server listening on ${HTTP_PORT}. Open: `);
 log(`http://localhost:${HTTP_PORT}`);
 log(`Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`);
 
-['SIGINT', 'SIGTERM', 'SIGQUIT']
-  .forEach(signal => process.on(signal, () => {
+["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) =>
+  process.on(signal, () => {
     console.log(`Server is terminating due to ${signal}`);
-    broadcastSysMsg('Server has terminated');
+    broadcastSysMsg("Server has terminated");
     process.exit();
-  }));
+  })
+);

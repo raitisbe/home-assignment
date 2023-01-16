@@ -8,12 +8,12 @@ export const activeClients = new Map();
 export const socketSessions = new Map();
 
 /**
- * Find session for socket, delete it and distribute disconnection 
- * message to all connected clients. Since hard-disconnect message 
- * is sent somewhere else we might want to suppress notification here 
+ * Find session for socket, delete it and distribute disconnection
+ * message to all connected clients. Since hard-disconnect message
+ * is sent somewhere else we might want to suppress notification here
  * (sidefects)
  * @param {WebSocket} ws
- * @param {boolean} notify 
+ * @param {boolean} notify
  */
 export function cleanUpClient(ws, notify) {
   const session = socketSessions.get(ws);
@@ -26,7 +26,7 @@ export function cleanUpClient(ws, notify) {
       broadcastSysMsg(`${username} left the chat, connection lost`);
     }
   }
-  if(session?.sessionId) {
+  if (session?.sessionId) {
     globals.sessionStore.destroy(session.sessionId);
   }
 }
