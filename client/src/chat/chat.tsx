@@ -19,6 +19,7 @@ interface StateModel {
 export class Chat extends Component<Props, StateModel> {
   
   end = new Subject<void>();
+  messagesEnd: HTMLDivElement | null = null;
 
   constructor(props: Props | Readonly<Props>) {
     super(props);
@@ -77,7 +78,15 @@ export class Chat extends Component<Props, StateModel> {
           blocks: [...previousState.blocks, newBlock],
         }));
       }
+      this.scrollToBottom();
     });
+  }
+
+  scrollToBottom() {
+    //Timeout used to wait for the ui to redraw
+    setTimeout(() => {
+      this.messagesEnd?.scrollIntoView({ behavior: "smooth",  });
+    })
   }
 
   componentWillUnmount() {
@@ -101,6 +110,9 @@ export class Chat extends Component<Props, StateModel> {
             {this.state.blocks.map((block, i) => {
               return <Block key={i} data={block} index={i}></Block>;
             })}
+            <div style={{ float:"left", clear: "both" }}
+              ref={(el) => { this.messagesEnd = el; }}>
+          </div>
           </Grid>
           <Grid item xs={12} md={8} sx={{height: '2em'}}>
             <TextField
