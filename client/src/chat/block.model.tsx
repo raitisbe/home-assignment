@@ -1,4 +1,3 @@
-
 export type BlockModel = {
   sender: string;
   messages: {

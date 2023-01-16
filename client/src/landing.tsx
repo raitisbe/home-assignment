@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Subject, takeUntil } from "rxjs";
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 import { IconButton, Snackbar } from "@mui/material";
 
 import { socketService } from "./sockets";
@@ -21,7 +21,7 @@ interface Props {
 
 interface StateModel {
   errorOpen: boolean;
-  message: string
+  message: string;
 }
 
 export class Landing extends React.Component<Props, StateModel> {
@@ -30,7 +30,7 @@ export class Landing extends React.Component<Props, StateModel> {
   constructor(props: Props | Readonly<Props>) {
     super(props);
     const stateFromLocation = this.props.location.state;
-    this.state = stateFromLocation ?? {errorOpen: false, message: ''};
+    this.state = stateFromLocation ?? { errorOpen: false, message: "" };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.closeError = this.closeError.bind(this);
@@ -60,26 +60,28 @@ export class Landing extends React.Component<Props, StateModel> {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({username: encodedUsername}),
+          body: JSON.stringify({ username: encodedUsername }),
         }
       ).then((response) => response.json());
       if (response.success === true) {
         socketService.connect(response.sessionId);
       } else {
-        this.setState({errorOpen: true, message: response.message})
+        this.setState({ errorOpen: true, message: response.message });
       }
     } catch (ex: any) {
-      if (ex.message === 'Failed to fetch') {
-        this.setState({errorOpen: true, message: 'Server unavailable'})
+      if (ex.message === "Failed to fetch") {
+        this.setState({ errorOpen: true, message: "Server unavailable" });
       } else {
-        this.setState({errorOpen: true, message: `Server unavailable: ${ex.message}`})
+        this.setState({
+          errorOpen: true,
+          message: `Server unavailable: ${ex.message}`,
+        });
       }
     }
-    
   }
 
-  closeError(){
-    this.setState({errorOpen: false})
+  closeError() {
+    this.setState({ errorOpen: false });
   }
 
   render() {
@@ -137,7 +139,7 @@ export class Landing extends React.Component<Props, StateModel> {
             </Box>
           </Box>
           <Snackbar
-            anchorOrigin={{vertical: 'top', horizontal: 'center' }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
             open={this.state.errorOpen}
             onClose={this.closeError}
             message={this.state.message}

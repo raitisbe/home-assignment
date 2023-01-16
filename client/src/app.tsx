@@ -1,28 +1,36 @@
-import { Routes, Route, Link, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  Navigate,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 
-import './app.css';
-import { Chat } from './chat/chat';
-import { Landing } from './landing';
-import { Layout } from './layout';
-import { socketService } from './sockets';
+import "./app.css";
+import { Chat } from "./chat/chat";
+import { Landing } from "./landing";
+import { Layout } from "./layout";
+import { socketService } from "./sockets";
 
 interface Props {
-  children?: JSX.Element
+  children?: JSX.Element;
 }
 
 const ProtectedRoute = ({ children, ...props }: Props) => {
   if (!socketService) {
-    console.warn('Redirecting due to socketService', socketService)
+    console.warn("Redirecting due to socketService", socketService);
     return <Navigate to="/" replace />;
   }
 
   if (!socketService.ws) {
-    console.warn('Redirecting due to socketService.ws', socketService.ws)
+    console.warn("Redirecting due to socketService.ws", socketService.ws);
     return <Navigate to="/" replace />;
   }
 
   if (socketService.ws.readyState !== WebSocket.OPEN) {
-    console.warn('Redirecting due to readyState', socketService.ws.readyState)
+    console.warn("Redirecting due to readyState", socketService.ws.readyState);
     return <Navigate to="/" replace />;
   }
 
@@ -36,15 +44,18 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Landing navigate={navigate} location={location}/>} />
           <Route
-          path="chat"
-          element={
-            <ProtectedRoute>
-              <Chat navigate={navigate} />
-            </ProtectedRoute>
-          }
-        />
+            index
+            element={<Landing navigate={navigate} location={location} />}
+          />
+          <Route
+            path="chat"
+            element={
+              <ProtectedRoute>
+                <Chat navigate={navigate} />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Using path="*"" means "match anything", so this route
                 acts like a catch-all for URLs that we don't have explicit
@@ -52,11 +63,9 @@ function App() {
           <Route path="*" element={<NoMatch />} />
         </Route>
       </Routes>
-      
     </div>
   );
 }
-
 
 function NoMatch() {
   return (
@@ -68,6 +77,5 @@ function NoMatch() {
     </div>
   );
 }
-
 
 export default App;

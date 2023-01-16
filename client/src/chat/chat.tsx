@@ -18,7 +18,6 @@ interface StateModel {
 }
 
 export class Chat extends Component<Props, StateModel> {
-  
   end = new Subject<void>();
   messagesEnd: HTMLDivElement | null = null;
 
@@ -27,7 +26,7 @@ export class Chat extends Component<Props, StateModel> {
 
     this.state = {
       blocks: [],
-      draft: ''
+      draft: "",
     };
 
     this.send = this.send.bind(this);
@@ -36,7 +35,9 @@ export class Chat extends Component<Props, StateModel> {
 
   componentDidMount() {
     socketService.onClose.pipe(takeUntil(this.end)).subscribe(() => {
-      this.props.navigate("/", { state: { errorOpen: true, message: 'You were disconnected' } });
+      this.props.navigate("/", {
+        state: { errorOpen: true, message: "You were disconnected" },
+      });
     });
 
     socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
@@ -53,44 +54,50 @@ export class Chat extends Component<Props, StateModel> {
       } else {
         this.startNewBlock(e);
       }
-      
     });
   }
 
-  startNewBlock(msg: { sender: string; text: string; }) {
+  startNewBlock(msg: { sender: string; text: string }) {
     const newBlock = {
       sender: msg.sender,
       messages: [{ text: msg.text }],
     };
-    this.setState((previousState) => ({
-      blocks: [...previousState.blocks, newBlock],
-    }), () => this.scrollToBottom());
+    this.setState(
+      (previousState) => ({
+        blocks: [...previousState.blocks, newBlock],
+      }),
+      () => this.scrollToBottom()
+    );
   }
 
-  appendMessageToBlock(e: { sender: string; text: string; }) {
-    this.setState((previousState) => {
-      const prevStateLastBlock = previousState.blocks[previousState.blocks.length - 1];
-      //Append message and recreate the whole last block
-      const recreatedBlock = update(prevStateLastBlock, {
-        messages: {
-          $apply: function () {
-            return update(prevStateLastBlock.messages, {
-              $push: [{ text: e.text }],
-            });
+  appendMessageToBlock(e: { sender: string; text: string }) {
+    this.setState(
+      (previousState) => {
+        const prevStateLastBlock =
+          previousState.blocks[previousState.blocks.length - 1];
+        //Append message and recreate the whole last block
+        const recreatedBlock = update(prevStateLastBlock, {
+          messages: {
+            $apply: function () {
+              return update(prevStateLastBlock.messages, {
+                $push: [{ text: e.text }],
+              });
+            },
           },
-        },
-      });
-      //Duplicate blocks array with newly recreated last block
-      return update(previousState, {
-        blocks: {
-          [previousState.blocks.length - 1]: { $set: recreatedBlock },
-        },
-      });
-    }, () => this.scrollToBottom());
+        });
+        //Duplicate blocks array with newly recreated last block
+        return update(previousState, {
+          blocks: {
+            [previousState.blocks.length - 1]: { $set: recreatedBlock },
+          },
+        });
+      },
+      () => this.scrollToBottom()
+    );
   }
 
   scrollToBottom() {
-    this.messagesEnd?.scrollIntoView({ behavior: "smooth",  });
+    this.messagesEnd?.scrollIntoView({ behavior: "smooth" });
   }
 
   componentWillUnmount() {
@@ -98,27 +105,44 @@ export class Chat extends Component<Props, StateModel> {
   }
 
   onDraftChange(event: { target: { value: string } }) {
-    this.setState({draft: event.target.value});
+    this.setState({ draft: event.target.value });
   }
 
   send() {
     socketService.send(this.state.draft);
-    this.setState({draft: ''});
+    this.setState({ draft: "" });
   }
 
   render() {
     return (
       <div>
-        <Grid container justifyContent={"center"} sx={{height: 'calc(100vh - 4em)'}} spacing={0}>
-          <Grid item xs={12} md={8} sx={{overflowY: 'scroll', flexGrow: 1, maxHeight: 'calc(100vh - 6em)'}}>
+        <Grid
+          container
+          justifyContent={"center"}
+          sx={{ height: "calc(100vh - 4em)" }}
+          spacing={0}
+        >
+          <Grid
+            item
+            xs={12}
+            md={8}
+            sx={{
+              overflowY: "scroll",
+              flexGrow: 1,
+              maxHeight: "calc(100vh - 6em)",
+            }}
+          >
             {this.state.blocks.map((block, i) => {
               return <Block key={i} data={block} index={i}></Block>;
             })}
-            <div style={{ float:"left", clear: "both" }}
-              ref={(el) => { this.messagesEnd = el; }}>
-          </div>
+            <div
+              style={{ float: "left", clear: "both" }}
+              ref={(el) => {
+                this.messagesEnd = el;
+              }}
+            ></div>
           </Grid>
-          <Grid item xs={12} md={8} sx={{height: '2em'}}>
+          <Grid item xs={12} md={8} sx={{ height: "2em" }}>
             <TextField
               label="Message:"
               variant="outlined"
@@ -126,8 +150,8 @@ export class Chat extends Component<Props, StateModel> {
               onChange={this.onDraftChange}
               fullWidth
               onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  this.send()
+                if (e.key === "Enter") {
+                  this.send();
                 }
               }}
               InputProps={{

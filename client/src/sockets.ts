@@ -6,7 +6,7 @@ export class SocketService {
   onConnect = new Subject<void>();
   onError = new Subject<void>();
   onClose = new Subject<void>();
-  onMessage = new Subject<{sender: string, text: string}>();
+  onMessage = new Subject<{ sender: string; text: string }>();
 
   connect(sessionId: string) {
     if (this.ws) {
@@ -28,13 +28,16 @@ export class SocketService {
           this.onMessage.next(data);
         }
         if (data.system) {
-          this.onMessage.next({sender: 'SYSTEM', text: data.system});
+          this.onMessage.next({ sender: "SYSTEM", text: data.system });
         }
       } catch (ex) {
-        console.log('Invalid message received or some other error occurred', ex);
+        console.log(
+          "Invalid message received or some other error occurred",
+          ex
+        );
       }
-    }
-    
+    };
+
     this.ws.onopen = () => {
       this.onConnect.next();
     };
