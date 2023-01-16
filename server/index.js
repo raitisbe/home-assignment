@@ -9,7 +9,7 @@ import cors from "cors";
 
 import { trackActivity } from "./activity-tracking.js";
 import { HTTP_PORT, LOG_MESSAGES, serverUrl, SESSION_SECRET } from "./config.js";
-import { distributeMessage } from "./messaging.js";
+import { broadcastSysMsg, distributeMessage } from "./messaging.js";
 import { log } from "./logging.js";
 import {
   activeClients,
@@ -148,3 +148,10 @@ server.listen(HTTP_PORT);
 log(`HTTP Server listening on ${HTTP_PORT}. Open: `);
 log(`http://localhost:${HTTP_PORT}`);
 log(`Connect to ws://localhost:${HTTP_PORT}/websocket/wsserver?sessionId=***`);
+
+['SIGINT', 'SIGTERM', 'SIGQUIT']
+  .forEach(signal => process.on(signal, () => {
+    console.log(`Server is terminating due to ${signal}`);
+    broadcastSysMsg('Server has terminated');
+    process.exit();
+  }));
