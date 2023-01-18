@@ -3,12 +3,9 @@ import express from "express";
 import bodyParser from "body-parser";
 import { WebSocketServer } from "ws";
 import querystring from "node:querystring";
-import session from "express-session";
-import { MemoryStore } from "express-session";
-import cors from "cors";
 
 import { trackActivity } from "./activity-tracking.js";
-import { HTTP_PORT, LOG_MESSAGES, SITE_URL, SESSION_SECRET } from "./config.js";
+import { HTTP_PORT, LOG_MESSAGES } from "./config.js";
 import { broadcastSysMsg, distributeMessage } from "./messaging.js";
 import { log } from "./logging.js";
 import {
@@ -17,70 +14,25 @@ import {
   socketSessions,
 } from "./socket-sessions.js";
 import { globals } from "./global.js";
+import {
+  authenticate,
+  authenticateWs,
+  sessionStore,
+  setupSecurity,
+} from "./security.js";
 
 //https://github.com/websockets/ws
 
-const app = express();
+export const app = express();
 const server = Server(app);
 export const wss = new WebSocketServer({ noServer: true });
 
 globals.wss = wss;
 
-app.use(
-  cors({
-    credentials: true,
-    origin: function (origin, callback) {
-      if (SITE_URL == origin) {
-        callback(null, true);
-      } else if (
-        !origin ||
-        (origin && origin.indexOf("http://localhost") > -1)
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error(origin + " Not allowed by CORS"));
-      }
-    },
-  })
-);
-
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }));
-
-//Memory store is not for production - doesn't scale well and does not persist
-const sessionStore = new MemoryStore();
-globals.sessionStore = sessionStore;
-const sessionParser = session({
-  secret: SESSION_SECRET,
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false,
-});
-app.use(sessionParser);
-
-function authenticate(req, res) {
-  const username = req.body.username;
-  if (!username) {
-    return res.status(403).json({
-      success: false,
-      message: "Username missing",
-    });
-  }
-  if (activeClients.get(username)) {
-    return res.status(403).json({
-      success: false,
-      message: "Failed to connect. Nickname already taken.",
-    });
-  }
-  req.session.username = username;
-  return res.status(200).json({
-    success: true,
-    sessionId: req.session.id,
-  });
-}
-
+setupSecurity(app);
 app.use(express.static("public-client"));
-
 app.use(express.json());
 app.post(`/auth`, authenticate);
 
@@ -114,14 +66,6 @@ wss.on("connection", function connection(ws, request, client) {
 });
 
 trackActivity(wss);
-
-function authenticateWs(username, cb) {
-  if (!username) {
-    return cb("Username missing");
-  }
-  log(`Socket for ${username} authenticated`);
-  cb(null); //null error
-}
 
 server.on("upgrade", function upgrade(request, socket, head) {
   try {
