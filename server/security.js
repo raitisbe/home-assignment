@@ -69,6 +69,15 @@ export function authenticate(req, res) {
   });
 }
 
+/**
+ * This is a dummy function which currently just checks for username
+ * which we got from express session given a sessionId. If session was 
+ * missing or username was not set, then this function returns callback 
+ * with an error which then disconnects socket.
+ * @param {*} username 
+ * @param {*} cb 
+ * @returns 
+ */
 export function authenticateWs(username, cb) {
   if (!username) {
     return cb("Username missing");
