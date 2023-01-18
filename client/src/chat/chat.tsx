@@ -57,10 +57,10 @@ export class Chat extends Component<Props, StateModel> {
     });
   }
 
-  startNewBlock(msg: { sender: string; text: string }) {
+  startNewBlock(msg: { sender: string; text: string; date: string }) {
     const newBlock = {
       sender: msg.sender,
-      messages: [{ text: msg.text }],
+      messages: [{ text: msg.text, date: msg.date }],
     };
     this.setState(
       (previousState) => ({
@@ -70,7 +70,7 @@ export class Chat extends Component<Props, StateModel> {
     );
   }
 
-  appendMessageToBlock(e: { sender: string; text: string }) {
+  appendMessageToBlock(e: { sender: string; text: string; date: string }) {
     this.setState(
       (previousState) => {
         const prevStateLastBlock =
@@ -80,7 +80,7 @@ export class Chat extends Component<Props, StateModel> {
           messages: {
             $apply: function () {
               return update(prevStateLastBlock.messages, {
-                $push: [{ text: e.text }],
+                $push: [{ text: e.text, date: e.date }],
               });
             },
           },
@@ -120,7 +120,7 @@ export class Chat extends Component<Props, StateModel> {
           container
           justifyContent={"center"}
           sx={{ height: "calc(100vh - 4em)" }}
-          spacing={0}
+          spacing={1}
         >
           <Grid
             item

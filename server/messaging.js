@@ -11,6 +11,7 @@ export function broadcastSysMsg(message) {
       client.send(
         JSON.stringify({
           system: message,
+          date: (new Date()).toISOString()
         }),
         { binary: false }
       );
@@ -23,6 +24,7 @@ export function broadcastSysMsg(message) {
  * @param {{sender: string, text: string}} wrapper
  */
 export function distributeMessage(wrapper) {
+  wrapper.date = (new Date()).toISOString();
   globals.wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(wrapper), { binary: false });

@@ -1,17 +1,15 @@
-import { Avatar, Chip, Grid, Paper } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import { ReactNode } from "react";
+import {
+  Avatar,
+  Card,
+  CardContent,
+  CardHeader,
+  List,
+  ListItem,
+  ListItemText,
+} from "@mui/material";
+import { Fragment, ReactNode } from "react";
 
 import { BlockModel } from "./block.model";
-
-const Message = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#d9e3f7",
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  margin: theme.spacing(0.5),
-  textAlign: "left",
-  color: theme.palette.text.secondary,
-}));
 
 /**
  * Messages coming from one sender are grouped into blocks
@@ -31,31 +29,36 @@ export function Block(props: { index: number; data: BlockModel }) {
   }
 
   return (
-    <Grid
-      container
-      spacing={1}
-      direction={props.index % 2 === 0 ? "row" : "row-reverse"}
-    >
-      <Grid item xs={2} md={2}>
-        <Chip
-          avatar={<Avatar>{firstLetter(props.data.sender)}</Avatar>}
-          label={props.data.sender}
-          variant="outlined"
-        />
-      </Grid>
-      <Grid item xs={12} md={10}>
-        {props.data.messages.map((msg, i) => {
-          return (
-            <Grid item key={i}>
-              <Message
-                sx={{ textAlign: props.index % 2 === 0 ? "left" : "right" }}
-              >
-                {msg.text}
-              </Message>
-            </Grid>
-          );
-        })}
-      </Grid>
-    </Grid>
+    <Card sx={{ margin: "1em", backgroundColor: "#edebe1" }}>
+      <CardHeader
+        sx={{
+          padding: "0.5em",
+          textAlign: props.index % 2 === 0 ? "left" : "right",
+          direction: props.index % 2 === 0 ? "ltl" : "rtl",
+        }}
+        avatar={<Avatar sx={{marginLeft: '0.5em'}}>{firstLetter(props.data.sender)}</Avatar>}
+        title={props.data.sender}
+        subheader={props.data.messages[0].date}
+      />
+      <CardContent
+        sx={{
+          padding: "0.5em",
+          textAlign: props.index % 2 === 0 ? "left" : "right",
+        }}
+      >
+        <List dense={true}>
+          {props.data.messages.map((msg, i) => {
+            return (
+              <ListItem sx={{ borderBottom: "1px solid #CCC" }}>
+                <ListItemText
+                  sx={{ textAlign: props.index % 2 === 0 ? "left" : "right" }}
+                  primary={<Fragment>{msg.text}</Fragment>}
+                />
+              </ListItem>
+            );
+          })}
+        </List>
+      </CardContent>
+    </Card>
   );
 }
