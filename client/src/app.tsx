@@ -52,7 +52,7 @@ function App() {
             path="chat"
             element={
               <ProtectedRoute>
-                <Chat navigate={navigate} />
+                <Chat/>
               </ProtectedRoute>
             }
           />

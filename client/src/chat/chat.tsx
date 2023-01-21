@@ -1,170 +1,146 @@
 import { Grid, IconButton, TextField } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import { Component } from "react";
+import { Component, useEffect, useLayoutEffect, useState } from "react";
 import { Subject, takeUntil } from "rxjs";
 import update from "immutability-helper";
 
 import { Block } from "./block";
 import { BlockModel } from "./block.model";
 import { socketService } from "../sockets";
+import { useNavigate } from "react-router-dom";
 
-interface Props {
-  navigate: any;
-}
+export function Chat() {
+  let messagesEnd: HTMLDivElement | null = null;
+  const [blocks, setBlocks] = useState([] as BlockModel[]);
+  const [draft, setDraft] = useState("");
 
-interface StateModel {
-  blocks: BlockModel[];
-  draft: string;
-}
+  useEffect(() => {
+    scrollToBottom();
+  }, [blocks]);
+  const navigate = useNavigate();
 
-export class Chat extends Component<Props, StateModel> {
-  end = new Subject<void>();
-  messagesEnd: HTMLDivElement | null = null;
-
-  constructor(props: Props | Readonly<Props>) {
-    super(props);
-
-    this.state = {
-      blocks: [],
-      draft: "",
-    };
-
-    this.send = this.send.bind(this);
-    this.onDraftChange = this.onDraftChange.bind(this);
-  }
-
-  componentDidMount() {
-    socketService.onClose.pipe(takeUntil(this.end)).subscribe(() => {
-      this.props.navigate("/", {
+  useEffect(() => {
+    const onCloseSubscription = socketService.onClose.subscribe(() => {
+      navigate("/", {
         state: { errorOpen: true, message: "You were disconnected" },
       });
     });
 
-    socketService.onMessage.pipe(takeUntil(this.end)).subscribe((e) => {
+    const onMessageSubscription = socketService.onMessage.subscribe((e) => {
       const lastBlock =
-        this.state.blocks.length > 0
-          ? this.state.blocks[this.state.blocks.length - 1]
-          : undefined;
+        blocks.length > 0 ? blocks[blocks.length - 1] : undefined;
       let append = false;
       if (lastBlock?.sender === e.sender) {
         append = true;
       }
       if (append) {
-        this.appendMessageToBlock(e);
+        appendMessageToBlock(e);
       } else {
-        this.startNewBlock(e);
+        startNewBlock(e);
       }
     });
-  }
+    return () => {
+      onCloseSubscription.unsubscribe();
+      onMessageSubscription.unsubscribe();
+    };
+  }, [blocks]);
 
-  startNewBlock(msg: { sender: string; text: string; date: string }) {
+  function startNewBlock(msg: { sender: string; text: string; date: string }) {
     const newBlock = {
       sender: msg.sender,
       messages: [{ text: msg.text, date: msg.date }],
     };
-    this.setState(
-      (previousState) => ({
-        blocks: [...previousState.blocks, newBlock],
-      }),
-      () => this.scrollToBottom()
-    );
+    setBlocks((previousState) => [...previousState, newBlock]);
   }
 
-  appendMessageToBlock(e: { sender: string; text: string; date: string }) {
-    this.setState(
-      (previousState) => {
-        const prevStateLastBlock =
-          previousState.blocks[previousState.blocks.length - 1];
-        //Append message and recreate the whole last block
-        const recreatedBlock = update(prevStateLastBlock, {
-          messages: {
-            $apply: function () {
-              return update(prevStateLastBlock.messages, {
-                $push: [{ text: e.text, date: e.date }],
-              });
-            },
-          },
-        });
-        //Duplicate blocks array with newly recreated last block
-        return update(previousState, {
-          blocks: {
-            [previousState.blocks.length - 1]: { $set: recreatedBlock },
-          },
-        });
+  function appendMessageToBlock(e: {
+    sender: string;
+    text: string;
+    date: string;
+  }) {
+    const lastBlock = blocks[blocks.length - 1];
+    //Append message and recreate the whole last block
+    const recreatedBlock = update(lastBlock, {
+      messages: {
+        $apply: function () {
+          return update(lastBlock.messages, {
+            $push: [{ text: e.text, date: e.date }],
+          });
+        },
       },
-      () => this.scrollToBottom()
-    );
+    });
+    const nextBlocks = blocks.map((c, i) => {
+      if (i === blocks.length - 1) {
+        return recreatedBlock;
+      } else {
+        return c;
+      }
+    });
+
+    setBlocks(nextBlocks);
   }
 
-  scrollToBottom() {
-    this.messagesEnd?.scrollIntoView({ behavior: "smooth" });
+  function scrollToBottom() {
+    messagesEnd?.scrollIntoView({ behavior: "smooth" });
   }
 
-  componentWillUnmount() {
-    this.end.next();
+  function send() {
+    socketService.send(draft);
+    setDraft("");
   }
 
-  onDraftChange(event: { target: { value: string } }) {
-    this.setState({ draft: event.target.value });
-  }
-
-  send() {
-    socketService.send(this.state.draft);
-    this.setState({ draft: "" });
-  }
-
-  render() {
-    return (
-      <div>
+  return (
+    <div>
+      <Grid
+        container
+        justifyContent={"center"}
+        sx={{ height: "calc(100vh - 4em)" }}
+        spacing={1}
+      >
         <Grid
-          container
-          justifyContent={"center"}
-          sx={{ height: "calc(100vh - 4em)" }}
-          spacing={1}
+          item
+          xs={12}
+          md={8}
+          sx={{
+            overflowY: "scroll",
+            flexGrow: 1,
+            maxHeight: "calc(100vh - 6em)",
+          }}
         >
-          <Grid
-            item
-            xs={12}
-            md={8}
-            sx={{
-              overflowY: "scroll",
-              flexGrow: 1,
-              maxHeight: "calc(100vh - 6em)",
+          {blocks.map((block, i) => {
+            return <Block key={i} data={block} index={i}></Block>;
+          })}
+          <div
+            style={{ float: "left", clear: "both" }}
+            ref={(el) => {
+              messagesEnd = el;
             }}
-          >
-            {this.state.blocks.map((block, i) => {
-              return <Block key={i} data={block} index={i}></Block>;
-            })}
-            <div
-              style={{ float: "left", clear: "both" }}
-              ref={(el) => {
-                this.messagesEnd = el;
-              }}
-            ></div>
-          </Grid>
-          <Grid item xs={12} md={8} sx={{ height: "2em" }}>
-            <TextField
-              label="Message:"
-              variant="outlined"
-              value={this.state.draft}
-              onChange={this.onDraftChange}
-              fullWidth
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  this.send();
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <IconButton onClick={this.send}>
-                    <SendIcon />
-                  </IconButton>
-                ),
-              }}
-            />
-          </Grid>
+          ></div>
         </Grid>
-      </div>
-    );
-  }
+        <Grid item xs={12} md={8} sx={{ height: "2em" }}>
+          <TextField
+            label="Message:"
+            variant="outlined"
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+            }}
+            fullWidth
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                send();
+              }
+            }}
+            InputProps={{
+              endAdornment: (
+                <IconButton onClick={send}>
+                  <SendIcon />
+                </IconButton>
+              ),
+            }}
+          />
+        </Grid>
+      </Grid>
+    </div>
+  );
 }
